@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logoutUser } from "../../store/authSlice";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, UserCircle } from "lucide-react";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -33,6 +33,15 @@ const Header = () => {
               <User className="h-4 w-4 mr-2 opacity-70" />
               <span className="text-sm text-gray-600">Hello, {user.name}</span>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/profile")} 
+              className="flex items-center"
+            >
+              <UserCircle className="h-4 w-4 mr-1" />
+              <span>Profile</span>
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center">
               <LogOut className="h-4 w-4 mr-1" />
               <span>Logout</span>

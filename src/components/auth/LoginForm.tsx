@@ -12,6 +12,8 @@ import { useToast } from "../ui/use-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginUser } from "../../store/authSlice";
 import { LoginCredentials } from "../../services/authService";
+import GoogleSignIn from "./GoogleSignIn";
+import { Separator } from "../ui/separator";
 
 // Define the form schema
 const formSchema = z.object({
@@ -60,7 +62,20 @@ const LoginForm = () => {
           Enter your credentials to access your todos
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <GoogleSignIn />
+        
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with email
+            </span>
+          </div>
+        </div>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
