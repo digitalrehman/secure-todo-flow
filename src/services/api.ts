@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "../components/ui/use-toast";
 
 // Define the base URL for our API
-const API_URL = "https://api-endpoint.example.com/api";
+const API_URL = "http://localhost:5000/api";
 
 // Create an Axios instance with default config
 const api = axios.create({
