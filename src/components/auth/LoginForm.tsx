@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "../ui/use-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginUser } from "../../store/authSlice";
+import { LoginCredentials } from "../../services/authService";
 
 // Define the form schema
 const formSchema = z.object({
@@ -38,7 +39,13 @@ const LoginForm = () => {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await dispatch(loginUser(values)).unwrap();
+      // Ensure we pass the values as LoginCredentials
+      const credentials: LoginCredentials = {
+        email: values.email,
+        password: values.password
+      };
+      
+      await dispatch(loginUser(credentials)).unwrap();
       navigate("/todos");
     } catch (error) {
       // Error is already handled by the async thunk
