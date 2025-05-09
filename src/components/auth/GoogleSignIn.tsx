@@ -1,23 +1,7 @@
 
-import { useEffect, useCallback } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
-import { useAppDispatch } from "../../store/hooks";
-import { googleLogin } from "../../store/authSlice";
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: any) => void;
-          renderButton: (element: HTMLElement, options: any) => void;
-          prompt: () => void;
-        }
-      }
-    }
-  }
-}
+import authService from "../../services/authService";
 
 interface GoogleSignInProps {
   text?: string;
@@ -26,72 +10,12 @@ interface GoogleSignInProps {
 
 const GoogleSignIn = ({ text = "Continue with Google", className = "" }: GoogleSignInProps) => {
   const { toast } = useToast();
-  const dispatch = useAppDispatch();
 
-  const handleCredentialResponse = useCallback(async (response: any) => {
+  const handleGoogleSignIn = async () => {
     try {
-      await dispatch(googleLogin(response.credential)).unwrap();
+      await authService.googleLogin();
     } catch (error) {
       console.error("Google login failed", error);
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    // Check if Google API is loaded
-    if (!window.google || !window.google.accounts) {
-      // Load the Google API script
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeGoogleSignIn;
-      document.body.appendChild(script);
-
-      return () => {
-        document.body.removeChild(script);
-      };
-    } else {
-      initializeGoogleSignIn();
-    }
-  }, [handleCredentialResponse]);
-
-  const initializeGoogleSignIn = () => {
-    if (window.google && window.google.accounts) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: process.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID", // Replace with your Google Client ID
-          callback: handleCredentialResponse,
-          auto_select: false,
-        });
-      } catch (error) {
-        console.error("Failed to initialize Google Sign-In", error);
-        toast({
-          title: "Google Sign-In Error",
-          description: "Failed to initialize Google Sign-In. Please try again later.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleGoogleSignIn = () => {
-    try {
-      if (window.google && window.google.accounts) {
-        window.google.accounts.id.prompt();
-      } else {
-        toast({
-          title: "Google Sign-In Error",
-          description: "Google Sign-In is not available. Please try again later.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to prompt Google Sign-In", error);
-      toast({
-        title: "Google Sign-In Error",
-        description: "Failed to open Google Sign-In. Please try again later.",
-        variant: "destructive",
-      });
     }
   };
 

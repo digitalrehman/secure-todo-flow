@@ -38,16 +38,12 @@ export interface PhoneVerificationRequest {
   userId?: string;
 }
 
-export interface GoogleLoginRequest {
-  tokenId: string;
-}
-
 // Authentication service
 const authService = {
   // Register a new user
   register: async (userData: RegisterCredentials): Promise<User> => {
     try {
-      const response = await api.post<AuthResponse>("/auth/register", userData);
+      const response = await api.post<AuthResponse>("/auth/email/register", userData);
       // Store token in localStorage
       localStorage.setItem("token", response.data.token);
       toast({
@@ -66,12 +62,15 @@ const authService = {
     }
   },
 
-  // Login user
+  // Login user using Auth.js
   login: async (credentials: LoginCredentials): Promise<User> => {
     try {
-      const response = await api.post<AuthResponse>("/auth/login", credentials);
-      // Store token in localStorage
-      localStorage.setItem("token", response.data.token);
+      const response = await api.post("/auth/callback/credentials", {
+        email: credentials.email,
+        password: credentials.password,
+        redirect: false
+      });
+      
       toast({
         title: "Login successful",
         description: "Welcome back!",
@@ -89,37 +88,43 @@ const authService = {
   },
 
   // Logout user
-  logout: () => {
-    localStorage.removeItem("token");
-    toast({
-      title: "Logged out",
-      description: "You have been securely logged out.",
-    });
+  logout: async () => {
+    try {
+      await api.post("/auth/signout", { redirect: false });
+      localStorage.removeItem("token");
+      toast({
+        title: "Logged out",
+        description: "You have been securely logged out.",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   },
 
   // Get current user
   getCurrentUser: async (): Promise<User | null> => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return null;
-      }
-      const response = await api.get<User>("/auth/me");
-      return response.data;
+      const response = await api.get("/auth/session");
+      return response.data?.user || null;
     } catch (error) {
       return null;
     }
   },
 
   // Check if user is authenticated
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem("token");
+  isAuthenticated: async (): Promise<boolean> => {
+    try {
+      const response = await api.get("/auth/session");
+      return !!response.data?.user;
+    } catch (error) {
+      return false;
+    }
   },
 
   // Verify email with token
   verifyEmail: async (verificationData: VerificationRequest): Promise<void> => {
     try {
-      await api.post('/auth/verify-email', verificationData);
+      await api.post('/auth/email/verify-email', verificationData);
       toast({
         title: "Email verified",
         description: "Your email has been successfully verified",
@@ -138,7 +143,7 @@ const authService = {
   // Send email verification
   sendVerificationEmail: async (email: string): Promise<void> => {
     try {
-      await api.post('/auth/send-verification', { email });
+      await api.post('/auth/email/send-verification', { email });
       toast({
         title: "Verification sent",
         description: "A verification email has been sent to your inbox",
@@ -157,7 +162,7 @@ const authService = {
   // Send phone verification code
   sendPhoneVerification: async (phoneNumber: string, userId?: string): Promise<string | null> => {
     try {
-      const response = await api.post('/auth/send-phone-verification', { 
+      const response = await api.post('/auth/email/send-phone-verification', { 
         phoneNumber, 
         userId 
       });
@@ -181,7 +186,7 @@ const authService = {
   // Verify phone number
   verifyPhoneNumber: async (verificationData: PhoneVerificationRequest): Promise<User> => {
     try {
-      const response = await api.post<{message: string, user: User}>('/auth/verify-phone', verificationData);
+      const response = await api.post<{message: string, user: User}>('/auth/email/verify-phone', verificationData);
       toast({
         title: "Phone verified",
         description: "Your phone number has been successfully verified",
@@ -199,20 +204,13 @@ const authService = {
   },
 
   // Login with Google
-  googleLogin: async (tokenId: string): Promise<User> => {
+  googleLogin: async (): Promise<void> => {
     try {
-      const response = await api.post<AuthResponse>('/auth/google-login', { tokenId });
-      localStorage.setItem("token", response.data.token);
-      toast({
-        title: "Google login successful",
-        description: "Welcome to SecureTodo!",
-      });
-      return response.data.user;
+      window.location.href = "/api/auth/signin/google";
     } catch (error: any) {
-      const message = error.response?.data?.message || "Google login failed";
       toast({
         title: "Login Error",
-        description: message,
+        description: "Google login failed",
         variant: "destructive",
       });
       throw error;

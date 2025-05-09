@@ -1,47 +1,39 @@
 
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+const { connectDB } = require('./config/db');
+const { Auth, authConfig } = require('./auth');
 const cookieParser = require('cookie-parser');
-const authRoutes = require('./routes/authRoutes');
-const todoRoutes = require('./routes/todoRoutes');
+const cors = require('cors');
 const { errorHandler } = require('./middleware/errorMiddleware');
+const path = require('path');
+
+// Connect to database
+connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
 
 // Middleware
-app.use(express.json());
-app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? 'https://yourdomain.com' : 'http://localhost:5173',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+// Initialize Auth.js
+app.use('/api/auth', Auth(authConfig));
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/todos', todoRoutes);
+app.use('/api/todos', require('./routes/todoRoutes'));
+app.use('/api/auth/email', require('./routes/authRoutes'));
 
-// Health check route
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
-
-// Error Handler (should be last)
+// Error handler
 app.use(errorHandler);
 
-// Start server
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
