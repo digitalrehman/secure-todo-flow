@@ -1,7 +1,8 @@
 
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
-import authService from "../../services/authService";
+import { useAppDispatch } from "../../store/hooks";
+import { googleLogin } from "../../store/authSlice";
 
 interface GoogleSignInProps {
   text?: string;
@@ -10,10 +11,11 @@ interface GoogleSignInProps {
 
 const GoogleSignIn = ({ text = "Continue with Google", className = "" }: GoogleSignInProps) => {
   const { toast } = useToast();
+  const dispatch = useAppDispatch();
 
   const handleGoogleSignIn = async () => {
     try {
-      await authService.googleLogin();
+      await dispatch(googleLogin());
     } catch (error) {
       console.error("Google login failed", error);
     }

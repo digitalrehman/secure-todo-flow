@@ -5,8 +5,7 @@ import authService, {
   LoginCredentials, 
   RegisterCredentials,
   VerificationRequest,
-  PhoneVerificationRequest,
-  GoogleLoginRequest
+  PhoneVerificationRequest
 } from "../services/authService";
 
 interface AuthState {
@@ -119,10 +118,11 @@ export const verifyPhoneNumber = createAsyncThunk(
 
 export const googleLogin = createAsyncThunk(
   "auth/googleLogin",
-  async (tokenId: string, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const user = await authService.googleLogin(tokenId);
-      return user;
+      await authService.googleLogin();
+      // This function redirects to Google auth so it doesn't return a user directly
+      return null;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Google login failed");
     }
@@ -249,10 +249,10 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(googleLogin.fulfilled, (state, action: PayloadAction<User>) => {
+      .addCase(googleLogin.fulfilled, (state) => {
         state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
+        // We don't set user or isAuthenticated here because googleLogin redirects to Google
+        // User will be set after redirecting back via fetchCurrentUser
       })
       .addCase(googleLogin.rejected, (state, action) => {
         state.loading = false;
